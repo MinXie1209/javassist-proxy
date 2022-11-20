@@ -101,15 +101,17 @@ public class MProxy {
      */
     private static void implMethods(Class<?>[] interfaces, CtClass ctClass) throws NotFoundException, CannotCompileException {
         for (int interfaceIndex = 0; interfaceIndex < interfaces.length; interfaceIndex++) {
-            // 添加接口
             CtClass interfaceCt = classPool.get(interfaces[interfaceIndex].getName());
             String interfaceName = interfaces[interfaceIndex].getName();
+            addMethodOfOneInterface(ctClass, interfaceCt.getDeclaredMethods(), interfaceName);
+        }
+    }
 
-            for (int methodIndex = 0; methodIndex < interfaceCt.getDeclaredMethods().length; methodIndex++) {
-                String fieldName = getFieldName(methodIndex, interfaceName);
-                // add method
-                addMethod(fieldName, interfaceCt.getDeclaredMethods()[methodIndex], ctClass);
-            }
+    private static void addMethodOfOneInterface(CtClass ctClass, CtMethod[] interfaceMethods, String interfaceName) throws CannotCompileException, NotFoundException {
+        for (int methodIndex = 0; methodIndex < interfaceMethods.length; methodIndex++) {
+            String fieldName = getFieldName(methodIndex, interfaceName);
+            // add method
+            addMethod(fieldName, interfaceMethods[methodIndex], ctClass);
         }
     }
 
@@ -176,15 +178,23 @@ public class MProxy {
     private static void addMethod(String fieldName, CtMethod ctMethod, CtClass ctClass) throws CannotCompileException, NotFoundException {
         CtMethod newMethod = CtNewMethod.copy(ctMethod, ctClass, null);
         String bodyCode;
-        if (newMethod.getReturnType().isPrimitive()) {
+        if ("void".equals(newMethod.getReturnType().getName())) {
+            bodyCode = getMethodBodyCodeByVoid(newMethod, fieldName);
+        } else if (newMethod.getReturnType().isPrimitive()) {
             bodyCode = getMethodBodyCodeByPrimitive(newMethod, fieldName);
         } else {
             bodyCode = getMethodBodyCode(newMethod, fieldName);
         }
-
         newMethod.setBody(bodyCode);
+
         newMethod.setModifiers(Modifier.PUBLIC);
         ctClass.addMethod(newMethod);
+    }
+
+    private static String getMethodBodyCodeByVoid(CtMethod newMethod, String fieldName) throws NotFoundException {
+        StringBuilder sb = new StringBuilder();
+        addInvokeSuperCode(newMethod, fieldName, sb);
+        return sb.append(";").toString();
     }
 
     /**

@@ -1,6 +1,7 @@
 package space.minxie.service;
 
 public interface LoginService {
+    public void login0(String username, String password);
     public boolean login(String username, String password);
 
     public Boolean loginV2(String username, String password);
