@@ -106,9 +106,9 @@ public class MProxy {
             String interfaceName = interfaces[interfaceIndex].getName();
 
             for (int methodIndex = 0; methodIndex < interfaceCt.getDeclaredMethods().length; methodIndex++) {
-                StringBuilder fieldName = getFieldName(methodIndex, interfaceName);
+                String fieldName = getFieldName(methodIndex, interfaceName);
                 // add method
-                addMethod(fieldName.toString(), interfaceCt.getDeclaredMethods()[methodIndex], ctClass);
+                addMethod(fieldName, interfaceCt.getDeclaredMethods()[methodIndex], ctClass);
             }
         }
     }
@@ -130,14 +130,14 @@ public class MProxy {
     private static void addStaticFieldsOfOneInterface(CtClass ctClass, Class<?> interfaces) throws CannotCompileException, NotFoundException {
         for (int methodIndex = 0; methodIndex < interfaces.getDeclaredMethods().length; methodIndex++) {
             String interfaceName = interfaces.getName();
-            StringBuilder fieldName = getFieldName(methodIndex, interfaceName);
-            CtField ctField = new CtField(classPool.get(Method.class.getName()), fieldName.toString(), ctClass);
+            String fieldName = getFieldName(methodIndex, interfaceName);
+            CtField ctField = new CtField(classPool.get(Method.class.getName()), fieldName, ctClass);
             ctField.setModifiers(Modifier.STATIC | Modifier.PRIVATE);
             String methodName = interfaces.getDeclaredMethods()[methodIndex].getName();
 
-            StringBuilder initializerCode = getFieldInitCode(methodIndex, interfaceName, methodName, interfaces);
+            String initializerCode = getFieldInitCode(methodIndex, interfaceName, methodName, interfaces);
 
-            CtField.Initializer initializer = CtField.Initializer.byExpr(initializerCode.toString());
+            CtField.Initializer initializer = CtField.Initializer.byExpr(initializerCode);
             ctClass.addField(ctField, initializer);
         }
     }
@@ -151,7 +151,7 @@ public class MProxy {
      * @param interfaces
      * @return
      */
-    private static StringBuilder getFieldInitCode(int methodIndex, String interfaceName, String methodName, Class<?> interfaces) {
+    private static String getFieldInitCode(int methodIndex, String interfaceName, String methodName, Class<?> interfaces) {
         StringBuilder initializerCode = new StringBuilder();
 
         initializerCode.append("Class.forName(\"");
@@ -170,7 +170,7 @@ public class MProxy {
             initializerCode.append("\")");
         }
         initializerCode.append("})");
-        return initializerCode;
+        return initializerCode.toString();
     }
 
     private static void addMethod(String fieldName, CtMethod ctMethod, CtClass ctClass) throws CannotCompileException, NotFoundException {
@@ -274,12 +274,12 @@ public class MProxy {
         return sb.append(";").toString();
     }
 
-    private static StringBuilder getFieldName(int methodIndex, String interfaceName) {
+    private static String getFieldName(int methodIndex, String interfaceName) {
         StringBuilder fieldName = new StringBuilder();
         fieldName.append("_");
         fieldName.append(interfaceName.replace(".", "_"));
         fieldName.append("_");
         fieldName.append(methodIndex);
-        return fieldName;
+        return fieldName.toString();
     }
 }
