@@ -18,16 +18,16 @@ public class MProxy {
 
         String clasName = generateClassName(interfaces);
         CtClass ctClass = classPool.makeClass(clasName, classPool.get(MObject.class.getName()));
-        CtClass[] classes = new CtClass[interfaces.length];
+
+        // 设置接口数组
+        setInterfaces(interfaces, ctClass);
 
         // 添加类成员变量
         addStaticFields(interfaces, ctClass);
 
-        // 实现接口方法 和 添加 接口类
-        implMethodsAndAddClasses(interfaces, ctClass, classes);
+        // 实现接口方法
+        implMethods(interfaces, ctClass);
 
-        // 设置接口类数组
-        ctClass.setInterfaces(classes);
 
         try {
             ctClass.writeFile("./rewrite");
@@ -37,6 +37,16 @@ public class MProxy {
 
         return loadClassAndNewInstance(h, clasName, ctClass);
 
+    }
+
+    private static void setInterfaces(Class<?>[] interfaces, CtClass ctClass) throws NotFoundException {
+        CtClass[] classes = new CtClass[interfaces.length];
+
+        for (int interfaceIndex = 0; interfaceIndex < interfaces.length; interfaceIndex++) {
+            // 添加接口
+            classes[interfaceIndex] = classPool.get(interfaces[interfaceIndex].getName());
+        }
+        ctClass.setInterfaces(classes);
     }
 
     /**
@@ -86,20 +96,19 @@ public class MProxy {
      *
      * @param interfaces
      * @param ctClass
-     * @param classes
      * @throws NotFoundException
      * @throws CannotCompileException
      */
-    private static void implMethodsAndAddClasses(Class<?>[] interfaces, CtClass ctClass, CtClass[] classes) throws NotFoundException, CannotCompileException {
+    private static void implMethods(Class<?>[] interfaces, CtClass ctClass) throws NotFoundException, CannotCompileException {
         for (int interfaceIndex = 0; interfaceIndex < interfaces.length; interfaceIndex++) {
             // 添加接口
-            classes[interfaceIndex] = classPool.get(interfaces[interfaceIndex].getName());
+            CtClass interfaceCt = classPool.get(interfaces[interfaceIndex].getName());
             String interfaceName = interfaces[interfaceIndex].getName();
 
-            for (int methodIndex = 0; methodIndex < classes[interfaceIndex].getDeclaredMethods().length; methodIndex++) {
+            for (int methodIndex = 0; methodIndex < interfaceCt.getDeclaredMethods().length; methodIndex++) {
                 StringBuilder fieldName = getFieldName(methodIndex, interfaceName);
                 // add method
-                addMethod(fieldName.toString(), classes[interfaceIndex].getDeclaredMethods()[methodIndex], ctClass);
+                addMethod(fieldName.toString(), interfaceCt.getDeclaredMethods()[methodIndex], ctClass);
             }
         }
     }
