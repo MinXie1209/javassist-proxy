@@ -5,6 +5,7 @@ import space.minxie.proxy.MInvocationHandler;
 import java.lang.reflect.Method;
 
 public class CusMInvocationHandler implements MInvocationHandler {
+
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         long start = System.currentTimeMillis();
@@ -45,6 +46,4 @@ public class CusMInvocationHandler implements MInvocationHandler {
         }
         return null;
     }
-
-
 }
